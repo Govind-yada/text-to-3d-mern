@@ -8,6 +8,7 @@ import {
   checkHealth,
   create3DTask,
   pollGenerationStatus,
+  generateDirectHunyuan,
   getHistory,
 } from './services/api';
 import './App.css';
@@ -63,8 +64,28 @@ export default function App() {
     setStatusText('Submitting prompt to text-to-3D AI...');
 
     try {
-      // 1. Submit prompt to backend
+      // 1. Submit prompt to backend or cloud fallback
       const result = await create3DTask(prompt, artStyle, negativePrompt, apiKey);
+
+      if (result.type === 'direct') {
+        setStatusText('Connecting to Tencent Hunyuan3D-2.0 via Hugging Face Spaces...');
+        const finalResult = await generateDirectHunyuan(
+          prompt,
+          artStyle,
+          ({ progress: currentProgress, message }) => {
+            setProgress(currentProgress);
+            setStatusText(message);
+          }
+        );
+
+        setProgress(100);
+        setStatusText('Model ready! Loading in 3D viewport...');
+        setCurrentModel(finalResult);
+        loadHistory();
+        setIsGenerating(false);
+        return;
+      }
+
       const taskId = result.taskId;
 
       setCurrentModel({
