@@ -3,7 +3,11 @@
  */
 
 // Determine API base URL dynamically
-const getApiBaseUrl = () => {
+export const getApiBaseUrl = () => {
+  if (typeof window !== 'undefined') {
+    const custom = localStorage.getItem('custom_api_base_url');
+    if (custom) return custom.trim();
+  }
   if (import.meta.env.VITE_API_BASE_URL) {
     return import.meta.env.VITE_API_BASE_URL;
   }
@@ -13,7 +17,15 @@ const getApiBaseUrl = () => {
   return 'http://localhost:5000/api';
 };
 
-const API_BASE_URL = getApiBaseUrl();
+export function setCustomApiBaseUrl(url) {
+  if (url) {
+    localStorage.setItem('custom_api_base_url', url.trim());
+  } else {
+    localStorage.removeItem('custom_api_base_url');
+  }
+}
+
+export const API_BASE_URL = getApiBaseUrl();
 
 /**
  * Check backend health & config
