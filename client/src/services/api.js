@@ -115,13 +115,21 @@ export async function generateDirectHunyuan(prompt, artStyle = 'realistic', onPr
   const app = await Client.connect('tencent/Hunyuan3D-2');
 
   onProgress?.({ progress: 65, message: 'Synthesizing 3D voxels & surface mesh...' });
-  const result = await app.predict('/shape_generation', [
-    imgBlob,
-    256,
-    false,
-    true,
-    0.85,
-  ]);
+  const result = await app.predict('/shape_generation', {
+    caption: prompt,
+    image: imgBlob,
+    mv_image_front: null,
+    mv_image_back: null,
+    mv_image_left: null,
+    mv_image_right: null,
+    steps: 15,
+    guidance_scale: 5,
+    seed: 1234,
+    octree_resolution: 128,
+    check_box_rembg: true,
+    num_chunks: 4000,
+    randomize_seed: true,
+  });
 
   onProgress?.({ progress: 95, message: 'Finalizing GLB container...' });
   let glbUrl = null;
