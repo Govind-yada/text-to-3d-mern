@@ -1,0 +1,15 @@
+{
+  "name": "text-to-3d-mern",
+  "version": "1.0.0",
+  "description": "Full-stack MERN Application for AI Text-to-3D Model Generation",
+  "scripts": {
+    "install:all": "npm install --prefix server && npm install --prefix client",
+    "dev:server": "npm run dev --prefix server",
+    "dev:client": "npm run dev --prefix client",
+    "build:client": "npm run build --prefix client",
+    "start:server": "npm start --prefix server"
+  },
+  "keywords": ["text-to-3d", "mern", "react-three-fiber", "threejs", "meshy", "ai"],
+  "author": "",
+  "license": "MIT"
+}

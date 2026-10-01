@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: text-to-3d-server
+    env: node
+    plan: free
+    rootDir: server
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: PORT
+        value: 5000
+      - key: NODE_ENV
+        value: production
+      - key: AI_PROVIDER
+        value: hunyuan3d
+      - key: HF_TOKEN
+        sync: false
+      - key: MONGODB_URI
+        sync: false
+      - key: CLIENT_ORIGIN
+        sync: false
