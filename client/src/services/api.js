@@ -2,8 +2,18 @@
  * API Service for communicating with the Node.js/Express backend
  */
 
-// In development, Vite proxy or direct localhost:5000. In production, use VITE_API_BASE_URL
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+// Determine API base URL dynamically
+const getApiBaseUrl = () => {
+  if (import.meta.env.VITE_API_BASE_URL) {
+    return import.meta.env.VITE_API_BASE_URL;
+  }
+  if (typeof window !== 'undefined' && window.location.protocol === 'https:') {
+    return 'https://285b39eb0144c2.lhr.life/api';
+  }
+  return 'http://localhost:5000/api';
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 /**
  * Check backend health & config
