@@ -234,14 +234,18 @@ class AIService {
         throw new Error('Hugging Face model generation completed without producing a valid GLB container.');
       }
 
-      // 5. Cache GLB locally on server
+      // 5. Cache GLB locally on server with graceful remote URL fallback
       const localFilename = `${taskId}.glb`;
       const localFilePath = path.join(MODELS_DIR, localFilename);
+      let publicUrl = `/models/${localFilename}`;
 
-      console.log(`[Hunyuan3D-2.0] Caching model to ${localFilePath}...`);
-      await this.downloadFile(sourceUrl, localFilePath);
-
-      const publicUrl = `/models/${localFilename}`;
+      try {
+        console.log(`[Hunyuan3D-2.0] Caching model to ${localFilePath}...`);
+        await this.downloadFile(sourceUrl, localFilePath);
+      } catch (cacheErr) {
+        console.warn(`[Hunyuan3D-2.0] Local caching failed (${cacheErr.message}), falling back to direct remote URL.`);
+        publicUrl = sourceUrl;
+      }
 
       task.status = 'SUCCEEDED';
       task.progress = 100;
