@@ -211,28 +211,22 @@ Frontend will start on `http://localhost:5173`. Open your browser and visit `htt
 
 ## 🌐 Production Deployment Guide
 
-### Deploying Frontend to Vercel
-
-1. Push your repository to GitHub.
-2. Sign in to [Vercel](https://vercel.com) and click **"Add New Project"**.
-3. Import your GitHub repository.
-4. In the project settings:
-   - **Framework Preset**: Vite
-   - **Root Directory**: Select `client`
-   - **Build Command**: `npm run build`
-   - **Output Directory**: `dist`
-5. Add Environment Variable:
-   - `VITE_API_BASE_URL`: `https://your-backend-service.onrender.com/api` (your deployed backend URL)
-6. Click **Deploy**.
-
-> The included `client/vercel.json` ensures client-side routing works without 404 errors.
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/Govind-yada/text-to-3d-mern)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/Govind-yada/text-to-3d-mern&root-directory=client)
 
 ---
 
-### Deploying Backend to Render
+### 1. Deploying Backend to Render (1-Click or Manual)
 
+#### Option A: 1-Click Blueprint (Recommended)
+Click the **Deploy to Render** button above or open:
+👉 **[https://render.com/deploy?repo=https://github.com/Govind-yada/text-to-3d-mern](https://render.com/deploy?repo=https://github.com/Govind-yada/text-to-3d-mern)**
+
+Render will automatically read [`render.yaml`](./render.yaml) and configure the Node web service.
+
+#### Option B: Manual Setup
 1. Sign in to [Render](https://render.com) and click **"New +" → "Web Service"**.
-2. Connect your GitHub repository.
+2. Connect your GitHub repository: `https://github.com/Govind-yada/text-to-3d-mern`.
 3. Configure the service:
    - **Name**: `text-to-3d-server`
    - **Root Directory**: `server`
@@ -242,12 +236,33 @@ Frontend will start on `http://localhost:5173`. Open your browser and visit `htt
 4. In the **Environment Variables** section, add:
    - `PORT`: `5000`
    - `NODE_ENV`: `production`
-   - `MESHY_API_KEY`: Your Meshy API Key
-   - `MONGODB_URI`: Your [MongoDB Atlas](https://www.mongodb.com/atlas) connection string (e.g. `mongodb+srv://user:pass@cluster0.mongodb.net/text-to-3d?retryWrites=true&w=majority`)
-   - `CLIENT_ORIGIN`: Your deployed Vercel URL (e.g. `https://your-frontend.vercel.app`)
+   - `AI_PROVIDER`: `hunyuan3d` (100% Free via Hugging Face)
+   - `HF_TOKEN`: *(Optional)* Your free Hugging Face token
+   - `MONGODB_URI`: *(Optional)* Your [MongoDB Atlas](https://www.mongodb.com/atlas) connection string
+   - `CLIENT_ORIGIN`: Your deployed Vercel URL
 5. Click **Create Web Service**.
 
-> The backend includes permissive CORS rules that automatically accept requests from `.vercel.app` domains, ensuring seamless cross-origin communication between Vercel and Render.
+---
+
+### 2. Deploying Frontend to Vercel (1-Click or Manual)
+
+#### Option A: 1-Click Deploy (Recommended)
+Click the **Deploy with Vercel** button above or open:
+👉 **[https://vercel.com/new/clone?repository-url=https://github.com/Govind-yada/text-to-3d-mern&root-directory=client](https://vercel.com/new/clone?repository-url=https://github.com/Govind-yada/text-to-3d-mern&root-directory=client)**
+
+#### Option B: Manual Setup
+1. Sign in to [Vercel](https://vercel.com) and click **"Add New Project"**.
+2. Import `Govind-yada/text-to-3d-mern`.
+3. In the project settings:
+   - **Framework Preset**: Vite
+   - **Root Directory**: `client`
+   - **Build Command**: `npm run build`
+   - **Output Directory**: `dist`
+4. In **Environment Variables**, add:
+   - `VITE_API_BASE_URL`: `https://text-to-3d-server.onrender.com/api` (replace with your Render service URL)
+5. Click **Deploy**.
+
+> The included `client/vercel.json` ensures SPA client-side routing works cleanly without 404 errors.
 
 ---
 
