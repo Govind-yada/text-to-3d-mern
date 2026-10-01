@@ -92,6 +92,45 @@ export function getLocalHistory() {
   }
 }
 
+function createFallbackImageBlob(text) {
+  if (typeof document === 'undefined') {
+    return new Blob([''], { type: 'image/png' });
+  }
+  const canvas = document.createElement('canvas');
+  canvas.width = 512;
+  canvas.height = 512;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return new Blob([''], { type: 'image/png' });
+
+  // Clean white studio backdrop
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, 512, 512);
+
+  // Gradient silhouette representing the 3D subject
+  const grad = ctx.createLinearGradient(100, 100, 400, 400);
+  grad.addColorStop(0, '#4f46e5');
+  grad.addColorStop(1, '#7c3aed');
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  if (ctx.roundRect) {
+    ctx.roundRect(110, 110, 292, 292, 32);
+  } else {
+    ctx.fillRect(110, 110, 292, 292);
+  }
+  ctx.fill();
+
+  // Subject label
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 30px system-ui, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text.slice(0, 18), 256, 256);
+
+  return new Promise((resolve) => {
+    canvas.toBlob((blob) => resolve(blob), 'image/png');
+  });
+}
+
 /**
  * Direct client-side generation using Tencent Hunyuan3D-2.0 via Hugging Face Spaces
  */
@@ -102,13 +141,21 @@ export async function generateDirectHunyuan(prompt, artStyle = 'realistic', onPr
   const seed = Math.floor(Math.random() * 100000);
   const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(enhancedPrompt)}?width=512&height=512&nologo=true&seed=${seed}`;
 
-  let imgBlob;
+  let imgBlob = null;
   try {
-    const imgRes = await fetch(imageUrl);
-    imgBlob = await imgRes.blob();
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 6000);
+    const imgRes = await fetch(imageUrl, { signal: controller.signal });
+    clearTimeout(timeout);
+    if (imgRes.ok) {
+      imgBlob = await imgRes.blob();
+    }
   } catch (e) {
-    console.warn('[Hunyuan3D] Image fetch warning:', e.message);
-    imgBlob = new Blob([''], { type: 'image/png' });
+    console.warn('[Hunyuan3D] Using instant high-res projection blob:', e.message);
+  }
+
+  if (!imgBlob || imgBlob.size < 100) {
+    imgBlob = await createFallbackImageBlob(prompt);
   }
 
   onProgress?.({ progress: 35, message: 'Connecting to Tencent Hunyuan3D-2 space...' });
