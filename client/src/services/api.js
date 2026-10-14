@@ -92,73 +92,47 @@ export function getLocalHistory() {
   }
 }
 
-function createFallbackImageBlob(text) {
-  if (typeof document === 'undefined') {
-    return new Blob([''], { type: 'image/png' });
+/**
+ * Fetch a real 2D concept image for the prompt with generous timeout and fallback endpoints
+ */
+async function fetchConceptImageBlob(prompt, artStyle) {
+  const enhancedPrompt = `${prompt}, ${artStyle} style, 3d game asset, single centered subject, pure white background`;
+  const seed = Math.floor(Math.random() * 10000);
+
+  const endpoints = [
+    `https://image.pollinations.ai/prompt/${encodeURIComponent(enhancedPrompt)}?width=512&height=512&nologo=true&seed=${seed}`,
+    `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt + ' 3d asset isolated on white background')}?width=512&height=512&nologo=true`,
+  ];
+
+  for (const url of endpoints) {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 25000); // 25s timeout
+      const res = await fetch(url, { signal: controller.signal });
+      clearTimeout(timeout);
+      if (res.ok) {
+        const blob = await res.blob();
+        if (blob && blob.size > 2000) {
+          return blob;
+        }
+      }
+    } catch (err) {
+      console.warn('[Image Generation] Endpoint failed, trying alternative:', err.message);
+    }
   }
-  const canvas = document.createElement('canvas');
-  canvas.width = 512;
-  canvas.height = 512;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return new Blob([''], { type: 'image/png' });
 
-  // Clean white studio backdrop
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0, 0, 512, 512);
-
-  // Gradient silhouette representing the 3D subject
-  const grad = ctx.createLinearGradient(100, 100, 400, 400);
-  grad.addColorStop(0, '#4f46e5');
-  grad.addColorStop(1, '#7c3aed');
-  ctx.fillStyle = grad;
-  ctx.beginPath();
-  if (ctx.roundRect) {
-    ctx.roundRect(110, 110, 292, 292, 32);
-  } else {
-    ctx.fillRect(110, 110, 292, 292);
-  }
-  ctx.fill();
-
-  // Subject label
-  ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 30px system-ui, sans-serif';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(text.slice(0, 18), 256, 256);
-
-  return new Promise((resolve) => {
-    canvas.toBlob((blob) => resolve(blob), 'image/png');
-  });
+  throw new Error(`Failed to generate 2D concept image for "${prompt}". Please check your internet connection and try again.`);
 }
 
 /**
  * Direct client-side generation using Tencent Hunyuan3D-2.0 via Hugging Face Spaces
  */
 export async function generateDirectHunyuan(prompt, artStyle = 'realistic', onProgress) {
-  onProgress?.({ progress: 15, message: 'Synthesizing 2D reference projection...' });
+  onProgress?.({ progress: 15, message: 'Synthesizing 2D concept image with AI (takes ~8-12s)...' });
 
-  const enhancedPrompt = `${prompt}, ${artStyle} style, 3d asset, single centered subject, white clean background`;
-  const seed = Math.floor(Math.random() * 100000);
-  const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(enhancedPrompt)}?width=512&height=512&nologo=true&seed=${seed}`;
+  const imgBlob = await fetchConceptImageBlob(prompt, artStyle);
 
-  let imgBlob = null;
-  try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 6000);
-    const imgRes = await fetch(imageUrl, { signal: controller.signal });
-    clearTimeout(timeout);
-    if (imgRes.ok) {
-      imgBlob = await imgRes.blob();
-    }
-  } catch (e) {
-    console.warn('[Hunyuan3D] Using instant high-res projection blob:', e.message);
-  }
-
-  if (!imgBlob || imgBlob.size < 100) {
-    imgBlob = await createFallbackImageBlob(prompt);
-  }
-
-  onProgress?.({ progress: 35, message: 'Connecting to Tencent Hunyuan3D-2 space...' });
+  onProgress?.({ progress: 40, message: 'Connecting to Tencent Hunyuan3D-2 neural space...' });
   const app = await Client.connect('tencent/Hunyuan3D-2');
 
   onProgress?.({ progress: 65, message: 'Synthesizing 3D voxels & surface mesh...' });
